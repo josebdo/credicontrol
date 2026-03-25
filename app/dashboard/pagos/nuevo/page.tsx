@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { Card, CardHeader, CardTitle, CardContent, FormField, ModernSelect, ModernInput, ModernButton, Badge, StatCard } from "@/components/UI";
 import { getPrestamos, addPago, updatePrestamo, type Prestamo } from "@/lib/data";
@@ -8,7 +8,7 @@ import TicketImpresion from "@/components/TicketImpresion";
 import { useAuth } from "@/lib/AuthContext";
 import { Search, CreditCard, Receipt, Printer, Save, User, DollarSign, Calendar, Banknote, AlertTriangle, CheckCircle2, PartyPopper } from "lucide-react";
 
-export default function NuevoPago() {
+function NuevoPagoContent() {
   const { empresa, user } = useAuth();
   const searchParams = useSearchParams();
   const [lista, setLista] = useState<Prestamo[]>([]);
@@ -314,5 +314,13 @@ export default function NuevoPago() {
         }} />
       )}
     </>
+  );
+}
+
+export default function NuevoPago() {
+  return (
+    <Suspense fallback={<div className="p-8 text-center text-muted-foreground">Cargando formulario...</div>}>
+      <NuevoPagoContent />
+    </Suspense>
   );
 }

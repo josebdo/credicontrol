@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
+import { Suspense } from "react";
 import Sidebar from "@/components/Sidebar";
 import { NAV_ITEMS } from "@/lib/nav";
 import { useAuth } from "@/lib/AuthContext";
@@ -17,11 +18,23 @@ function getBreadcrumb(pathname: string) {
   return ["Panel"];
 }
 
-export default function DashboardLayout({ children }: { children: React.ReactNode }) {
-  const pathname = usePathname();
+function SearchParamsHandler({ isSuperAdmin, user, isLoading }: { isSuperAdmin: boolean, user: any, isLoading: boolean }) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const impersonate = searchParams.get("impersonate") === "true";
+
+  useEffect(() => {
+    if (!isLoading && user && isSuperAdmin && !impersonate) {
+      router.replace("/superadmin");
+    }
+  }, [user, isLoading, router, isSuperAdmin, impersonate]);
+
+  return null;
+}
+
+export default function DashboardLayout({ children }: { children: React.ReactNode }) {
+  const pathname = usePathname();
+  const router = useRouter();
   const { user, isLoading, logout, roleLabel, roleColor, isSuperAdmin } = useAuth();
   const [mobile, setMobile] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);
@@ -43,8 +56,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   useEffect(() => {
     if (!isLoading && !user) router.replace("/login");
-    if (!isLoading && user && isSuperAdmin && !impersonate) router.replace("/superadmin");
-  }, [user, isLoading, router, isSuperAdmin, impersonate]);
+  }, [user, isLoading, router]);
 
   if (isLoading || !user) return (
     <div className="flex items-center justify-center h-screen bg-background">
@@ -57,6 +69,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   return (
     <div className="flex h-screen overflow-hidden bg-background">
+      <Suspense fallback={null}>
+        <SearchParamsHandler isSuperAdmin={isSuperAdmin} user={user} isLoading={isLoading} />
+      </Suspense>
       {/* Sidebar desktop */}
       <aside 
         className={`hidden md:flex flex-col shrink-0 transition-all duration-300 ease-in-out ${
