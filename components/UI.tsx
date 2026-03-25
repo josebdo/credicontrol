@@ -1,4 +1,5 @@
 "use client";
+import { useEffect } from "react";
 
 export const colors = {
   blue: "hsl(217, 91%, 60%)",
@@ -531,5 +532,39 @@ export function FilterButton({
     >
       {label}
     </button>
+  );
+}
+export function Toast({
+  message,
+  type = "info",
+  onClose,
+}: {
+  message: string;
+  type?: "info" | "success" | "error" | "warning";
+  onClose: () => void;
+}) {
+  useEffect(() => {
+    const timer = setTimeout(onClose, 3000);
+    return () => clearTimeout(timer);
+  }, [onClose]);
+
+  const colors = {
+    info: "bg-primary border-primary",
+    success: "bg-success border-success",
+    error: "bg-destructive border-destructive",
+    warning: "bg-warning border-warning",
+  };
+
+  return (
+    <div className="fixed bottom-4 right-4 z-[100] animate-slide-in">
+      <div className={`flex items-center gap-3 px-4 py-3 rounded-xl border text-white shadow-elevated ${colors[type]}`}>
+        <span className="text-sm font-bold">{message}</span>
+        <button onClick={onClose} className="hover:opacity-70">
+          <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
+    </div>
   );
 }

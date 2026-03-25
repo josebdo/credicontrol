@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { Empresa } from "@/lib/auth";
+import { Toast } from "@/components/UI";
 
 const PLAN_PRECIOS: Record<string,number> = { principiante:900, basico:1500, intermedio:2000, avanzado:3000, empresarial:5500 };
 const PLAN_MAX: Record<string,string>     = { principiante:"100", basico:"500", intermedio:"1,000", avanzado:"3,000", empresarial:"∞" };
@@ -19,6 +20,7 @@ export default function SuperAdminEmpresas() {
   const [saved, setSaved]       = useState(false);
   const [renovarEmp, setRenovarEmp] = useState<Empresa | null>(null);
   const [renewSaved, setRenewSaved] = useState(false);
+  const [toast, setToast]           = useState<{ msg: string, type: "success" | "error" | "info" } | null>(null);
   const supabase = createClient();
 
   useEffect(() => {
@@ -85,10 +87,11 @@ export default function SuperAdminEmpresas() {
         if (error) throw error;
       }
       setSaved(true);
+      setToast({ msg: "Empresa guardada exitosamente", type: "success" });
       fetchEmpresas();
       setTimeout(()=>{ setSaved(false); setShowForm(false); setEditing(null); }, 1000);
     } catch (err) {
-      alert("Error al guardar empresa");
+      setToast({ msg: "Error al guardar empresa", type: "error" });
     }
   }
 
@@ -96,9 +99,10 @@ export default function SuperAdminEmpresas() {
     try {
       const { error } = await supabase.from('empresas').update({ activa: !current }).eq('id', id);
       if (error) throw error;
+      setToast({ msg: `Empresa ${!current ? 'activada' : 'suspendida'}`, type: "success" });
       fetchEmpresas();
     } catch (err) {
-      alert("Error al cambiar estado");
+      setToast({ msg: "Error al cambiar estado", type: "error" });
     }
   }
 
@@ -108,10 +112,11 @@ export default function SuperAdminEmpresas() {
       const { error } = await supabase.from('empresas').update({ activa: true }).eq('id', renovarEmp.id);
       if (error) throw error;
       setRenewSaved(true);
+      setToast({ msg: "Suscripción renovada exitosamente", type: "success" });
       fetchEmpresas();
       setTimeout(()=>{ setRenewSaved(false); setRenovarEmp(null); }, 1000);
     } catch (err) {
-      alert("Error al renovar empresa");
+      setToast({ msg: "Error al renovar empresa", type: "error" });
     }
   }
 
@@ -417,6 +422,7 @@ export default function SuperAdminEmpresas() {
           </div>
         </div>
       )}
+      {toast && <Toast message={toast.msg} type={toast.type} onClose={() => setToast(null)} />}
     </div>
   );
 }

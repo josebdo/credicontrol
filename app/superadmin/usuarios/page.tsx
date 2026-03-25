@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { User, Empresa } from "@/lib/auth";
+import { Toast } from "@/components/UI";
 import Link from "next/link";
 
 // Super admin staff roles (people who help manage the platform)
@@ -32,6 +33,7 @@ export default function SuperAdminUsuariosPage() {
   const [form, setForm]           = useState(EMPTY);
   const [saved, setSaved]         = useState(false);
   const [editing, setEditing]     = useState<PlatformUser | null>(null);
+  const [toast, setToast]         = useState<{ msg: string, type: "success" | "error" | "info" } | null>(null);
   const supabase = createClient();
 
   useEffect(() => {
@@ -89,16 +91,15 @@ export default function SuperAdminUsuariosPage() {
         }).eq('id', editing.id);
         if (error) throw error;
       } else {
-        // Registration for new staff would normally involve auth.signUp, 
-        // for now we'll just update existing if allowed or show error
-        alert("Para nuevos usuarios use el registro o RPC.");
+        // Registration for new staff
+        setToast({ msg: "Para nuevos usuarios registrados, el sistema de invitación está en desarrollo. Use el registro público por ahora.", type: "info" });
         return;
       }
-      setSaved(true);
+      setToast({ msg: "Usuario guardado exitosamente", type: "success" });
       fetchUsers();
-      setTimeout(() => { setSaved(false); setShowForm(false); setEditing(null); setForm(EMPTY); }, 1000);
+      setTimeout(() => { setShowForm(false); setEditing(null); setForm(EMPTY); }, 1000);
     } catch (err) {
-      alert("Error al guardar usuario");
+      setToast({ msg: "Error al guardar usuario", type: "error" });
     }
   }
 
@@ -106,9 +107,10 @@ export default function SuperAdminUsuariosPage() {
     try {
       const { error } = await supabase.from('usuarios').update({ activo: !current }).eq('id', id);
       if (error) throw error;
+      setToast({ msg: `Usuario ${!current ? 'activado' : 'desactivado'}`, type: "success" });
       fetchUsers();
     } catch (err) {
-      alert("Error al cambiar estado");
+      setToast({ msg: "Error al cambiar estado", type: "error" });
     }
   }
 
@@ -370,6 +372,7 @@ export default function SuperAdminUsuariosPage() {
           </table>
         </div>
       </div>
+      {toast && <Toast message={toast.msg} type={toast.type} onClose={() => setToast(null)} />}
     </div>
   );
 }
