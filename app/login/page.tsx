@@ -38,13 +38,6 @@ export default function LoginPage() {
     }
   }
 
-  const demos = [
-    { label: "Super Admin", email: "superadmin@credicontrol.net", pw: "super2024", c: "#8b5cf6" },
-    { label: "Administrador", email: "admin@credicontrol.com", pw: "admin123", c: "#ef4444" },
-    { label: "Supervisor", email: "maria@pm.com", pw: "maria123", c: "#f59e0b" },
-    { label: "Cobrador", email: "carlos@pm.com", pw: "carlos123", c: "#3b82f6" },
-    { label: "Secretaria", email: "ana@pm.com", pw: "ana123", c: "#22c55e" },
-  ];
 
   return (
     <div className="min-h-screen flex">
@@ -184,36 +177,6 @@ export default function LoginPage() {
             </p>
           </div>
 
-          {/* Demo Users */}
-          <div className="mt-8 pt-6 border-t border-border">
-            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
-              Usuarios Demo
-            </p>
-            <div className="space-y-2">
-              {demos.map(d => (
-                <button 
-                  key={d.email} 
-                  onClick={() => { 
-                    setEmail(d.email); 
-                    setPassword(d.pw); 
-                    setTimeout(async () => { 
-                      const r = await login(d.email, d.pw); 
-                      if (r.ok) router.push(r.role === "super_admin" ? "/superadmin" : "/dashboard"); 
-                    }, 100); 
-                  }}
-                  className="w-full flex items-center justify-between px-4 py-2.5 bg-muted/50 hover:bg-muted rounded-lg text-sm transition-colors group"
-                >
-                  <div className="flex items-center gap-3">
-                    <span className="w-2 h-2 rounded-full" style={{ backgroundColor: d.c }} />
-                    <span className="font-medium text-foreground">{d.label}</span>
-                  </div>
-                  <span className="text-muted-foreground text-xs truncate max-w-[150px] group-hover:text-foreground transition-colors">
-                    {d.email}
-                  </span>
-                </button>
-              ))}
-            </div>
-          </div>
         </div>
       </div>
     </div>
