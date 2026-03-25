@@ -38,3 +38,7 @@ export const PLAN_LIMITS: Record<string, { prestamos: number; usuarios: number; 
   avanzado: { prestamos: 3000, usuarios: 8, label: "Avanzado", precio: 3000 },
   empresarial: { prestamos: 99999, usuarios: 16, label: "Empresarial", precio: 5500 },
 };
+
+// ── COMPATIBILITY EXPORTS ─────────────────────────────────────────────────────
+export const USERS: any[] = [];
+export const EMPRESAS: any[] = [];

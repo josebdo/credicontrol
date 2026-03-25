@@ -272,3 +272,32 @@ export async function updateUsuario(id: string, updates: any) {
   if (error) throw error;
   return data;
 }
+
+// ── COMPATIBILITY EXPORTS (STUBS) ─────────────────────────────────────────────
+// Estos arrays se mantienen vacíos para evitar errores de importación en componentes
+// que aún no han sido refactorizados a Supabase.
+export const PRESTAMOS: any[] = [];
+export const CLIENTES: any[] = [];
+export const PAGOS: any[] = [];
+export const GASTOS: any[] = [];
+export const GARANTIAS: any[] = [];
+export const MENSAJES_WS: any[] = [];
+export const PLANTILLAS: any[] = [];
+
+export async function addGarantia(garantia: any) {
+  const { data, error } = await supabase.from('garantias').insert([garantia]).select().single();
+  if (error) throw error;
+  return data;
+}
+
+export async function updatePago(id: string, updates: any) {
+  const { data, error } = await supabase.from('pagos').update(updates).eq('id', id).select().single();
+  if (error) throw error;
+  return data;
+}
+
+export async function addMensajeWS(mensaje: any) {
+  const { data, error } = await supabase.from('whatsapp_mensajes').insert([mensaje]).select().single();
+  if (error) throw error;
+  return data;
+}
