@@ -91,9 +91,19 @@ export default function SuperAdminUsuariosPage() {
         }).eq('id', editing.id);
         if (error) throw error;
       } else {
-        // Registration for new staff
-        setToast({ msg: "Para nuevos usuarios registrados, el sistema de invitación está en desarrollo. Use el registro público por ahora.", type: "info" });
-        return;
+        // Create new staff user via RPC
+        if (!form.password) {
+          setToast({ msg: "La contraseña es requerida para nuevos usuarios", type: "error" });
+          return;
+        }
+        const { data, error } = await supabase.rpc('create_staff_user', {
+          p_email: form.email,
+          p_password: form.password,
+          p_nombre: form.nombre,
+          p_rol: dbRole,
+          p_telefono: form.telefono
+        });
+        if (error) throw error;
       }
       setToast({ msg: "Usuario guardado exitosamente", type: "success" });
       fetchUsers();

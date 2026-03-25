@@ -1,5 +1,7 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { createClient } from "@/lib/supabase/client";
+import { Toast } from "@/components/UI";
 
 const PLAN_PRECIOS: Record<string,number> = { principiante:900, basico:1500, intermedio:2000, avanzado:3000, empresarial:5500 };
 
@@ -18,11 +20,48 @@ const PAGOS_DEMO: Pago[] = [
 ];
 
 export default function FacturacionPage() {
-  const [pagos, setPagos]     = useState<Pago[]>(PAGOS_DEMO);
+  const [pagos, setPagos]     = useState<Pago[]>([]);
+  const [loading, setLoading] = useState(true);
   const [busRef, setBusRef]   = useState("");
   const [filtroEstado, setFiltroEstado] = useState<string>("todos");
   const [showRenovar, setShowRenovar]   = useState<Pago | null>(null);
   const [renovado, setRenovado]         = useState(false);
+  const [toast, setToast]               = useState<{ msg: string, type: "success" | "error" | "info" } | null>(null);
+  const supabase = createClient();
+
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  async function fetchData() {
+    try {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from('empresas')
+        .select('*, planes(nombre, precio_mensual)')
+        .order('creado_en', { ascending: false });
+      
+      if (error) throw error;
+
+      const mapped: Pago[] = (data || []).map(e => ({
+        id: e.id,
+        ref: `REN-${e.id.slice(0,8)}`,
+        empresa: e.nombre,
+        empresa_id: e.id,
+        plan: (e as any).planes?.nombre || 'basico',
+        monto: (e as any).planes?.precio_mensual || 1500,
+        fecha: new Date(e.creado_en).toLocaleDateString(),
+        estado: e.activa ? "pagado" : "vencido",
+        metodo: "Automatizado"
+      }));
+
+      setPagos(mapped);
+    } catch (err) {
+      console.error("Error fetching billing data:", err);
+    } finally {
+      setLoading(false);
+    }
+  }
 
   const filtrados = pagos.filter(p => {
     const matchRef    = !busRef || p.ref.toLowerCase().includes(busRef.toLowerCase()) || p.empresa.toLowerCase().includes(busRef.toLowerCase());
@@ -30,16 +69,27 @@ export default function FacturacionPage() {
     return matchRef && matchEstado;
   });
 
-  const mrr      = PAGOS_DEMO.filter(p => p.fecha.startsWith("01/03") && p.estado === "pagado").reduce((s,p)=>s+p.monto,0);
-  const pendientes = PAGOS_DEMO.filter(p => p.estado === "pendiente").length;
-  const vencidos   = PAGOS_DEMO.filter(p => p.estado === "vencido").length;
+  const mrr        = pagos.filter(p => p.estado === "pagado").reduce((s,p)=>s+p.monto,0);
+  const pendientes = pagos.filter(p => p.estado === "pendiente").length;
+  const vencidos   = pagos.filter(p => p.estado === "vencido").length;
 
-  function handleRenovar() {
+  async function handleRenovar() {
     if (!showRenovar) return;
-    const ref = `REF-${Date.now()}`;
-    setPagos(prev => prev.map(p => p.id === showRenovar.id ? {...p, estado:"pagado", ref, metodo:"Manual"} : p));
-    setRenovado(true);
-    setTimeout(() => { setRenovado(false); setShowRenovar(null); }, 1200);
+    try {
+      const { error } = await supabase
+        .from('empresas')
+        .update({ activa: true })
+        .eq('id', showRenovar.empresa_id);
+      
+      if (error) throw error;
+
+      setRenovado(true);
+      setToast({ msg: "Empresa renovada exitosamente", type: "success" });
+      fetchData();
+      setTimeout(() => { setRenovado(false); setShowRenovar(null); }, 1200);
+    } catch (err) {
+      setToast({ msg: "Error al renovar empresa", type: "error" });
+    }
   }
 
   const RenderBadge = ({ estado }: { estado: Pago["estado"] }) => {
@@ -253,6 +303,7 @@ export default function FacturacionPage() {
           </div>
         </div>
       )}
+      {toast && <Toast message={toast.msg} type={toast.type} onClose={() => setToast(null)} />}
     </div>
   );
 }
