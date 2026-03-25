@@ -42,6 +42,9 @@ export type Prestamo = {
   notas?: string;
   // Aliases para compatibilidad con UI vieja
   cuota?: number; 
+  tasa?: number;
+  cobrador?: string;
+  garantia?: string;
   saldo?: number;
   fecha_vence?: string;
 };
