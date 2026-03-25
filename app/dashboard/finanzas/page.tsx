@@ -31,31 +31,31 @@ export default function FinanzasPage() {
       {/* Stats Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
-          title="Efectivo en Caja"
+          label="Efectivo en Caja"
           value="RD$ 85,400"
           icon={<Wallet className="h-5 w-5" />}
-          trend={{ value: 12, isPositive: true }}
+          trend={{ value: "12%", positive: true }}
           color="success"
         />
         <StatCard
-          title="En Bancos"
+          label="En Bancos"
           value="RD$ 240,000"
           icon={<Building2 className="h-5 w-5" />}
-          trend={{ value: 8, isPositive: true }}
+          trend={{ value: "8%", positive: true }}
           color="primary"
         />
         <StatCard
-          title="Gastos del Mes"
+          label="Gastos del Mes"
           value="RD$ 12,300"
           icon={<ArrowDownRight className="h-5 w-5" />}
-          trend={{ value: 5, isPositive: false }}
+          trend={{ value: "5%", positive: false }}
           color="destructive"
         />
         <StatCard
-          title="Ingresos del Mes"
+          label="Ingresos del Mes"
           value="RD$ 67,800"
           icon={<ArrowUpRight className="h-5 w-5" />}
-          trend={{ value: 15, isPositive: true }}
+          trend={{ value: "15%", positive: true }}
           color="warning"
         />
       </div>
