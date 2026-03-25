@@ -1,6 +1,7 @@
 "use client";
-import { useState } from "react";
-import { USERS } from "@/lib/auth";
+import { useState, useEffect } from "react";
+import { createClient } from "@/lib/supabase/client";
+import { User, Empresa } from "@/lib/auth";
 import Link from "next/link";
 
 // Super admin staff roles (people who help manage the platform)
@@ -24,28 +25,91 @@ const PLATFORM_USERS_DEMO: PlatformUser[] = [
 const EMPTY = { nombre:"", email:"", telefono:"", password:"", platform_role:"platform_soporte", activo:true };
 
 export default function SuperAdminUsuariosPage() {
-  const [platUsers, setPlatUsers] = useState<PlatformUser[]>(PLATFORM_USERS_DEMO);
+  const [platUsers, setPlatUsers] = useState<PlatformUser[]>([]);
+  const [tenantAdmins, setTenantAdmins] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
   const [showForm, setShowForm]   = useState(false);
   const [form, setForm]           = useState(EMPTY);
   const [saved, setSaved]         = useState(false);
   const [editing, setEditing]     = useState<PlatformUser | null>(null);
+  const supabase = createClient();
 
-  // Also show all tenant admins
-  const tenantAdmins = USERS.filter(u => u.role === "administrador");
+  useEffect(() => {
+    fetchUsers();
+  }, []);
 
-  function handleSave() {
-    if (!form.nombre || !form.email) return;
-    if (editing) {
-      setPlatUsers(prev => prev.map(u => u.id === editing.id ? {...u, ...form} : u));
-    } else {
-      setPlatUsers(prev => [...prev, { ...form, id:`pu-${Date.now()}` }]);
+  async function fetchUsers() {
+    try {
+      setLoading(true);
+      // Fetch platform users (super admins)
+      const { data: staff, error: errStaff } = await supabase
+        .from('usuarios')
+        .select('*')
+        .is('empresa_id', null);
+      
+      if (errStaff) throw errStaff;
+      
+      const mappedStaff = (staff || []).map(u => ({
+        id: u.id,
+        nombre: u.nombre,
+        email: u.email,
+        telefono: u.telefono || "",
+        platform_role: u.role === 'super_admin' ? 'platform_admin' : 'platform_soporte', // Map for UI
+        activo: u.activo
+      }));
+      setPlatUsers(mappedStaff);
+
+      // Fetch tenant admins with company name
+      const { data: admins, error: errAdmins } = await supabase
+        .from('usuarios')
+        .select('*, empresas(nombre)')
+        .eq('role', 'administrador');
+      
+      if (errAdmins) throw errAdmins;
+      setTenantAdmins(admins || []);
+
+    } catch (err) {
+      console.error("Error fetching users:", err);
+    } finally {
+      setLoading(false);
     }
-    setSaved(true);
-    setTimeout(() => { setSaved(false); setShowForm(false); setEditing(null); setForm(EMPTY); }, 1000);
   }
 
-  function toggleActivo(id: string) {
-    setPlatUsers(prev => prev.map(u => u.id === id ? {...u, activo:!u.activo} : u));
+  async function handleSave() {
+    if (!form.nombre || !form.email) return;
+    try {
+      const dbRole = form.platform_role === 'platform_admin' ? 'super_admin' : 'secretaria'; // Mapping back to DB roles
+      if (editing) {
+        const { error } = await supabase.from('usuarios').update({
+          nombre: form.nombre,
+          email: form.email,
+          telefono: form.telefono,
+          role: dbRole as any,
+          activo: form.activo
+        }).eq('id', editing.id);
+        if (error) throw error;
+      } else {
+        // Registration for new staff would normally involve auth.signUp, 
+        // for now we'll just update existing if allowed or show error
+        alert("Para nuevos usuarios use el registro o RPC.");
+        return;
+      }
+      setSaved(true);
+      fetchUsers();
+      setTimeout(() => { setSaved(false); setShowForm(false); setEditing(null); setForm(EMPTY); }, 1000);
+    } catch (err) {
+      alert("Error al guardar usuario");
+    }
+  }
+
+  async function toggleActivo(id: string, current: boolean) {
+    try {
+      const { error } = await supabase.from('usuarios').update({ activo: !current }).eq('id', id);
+      if (error) throw error;
+      fetchUsers();
+    } catch (err) {
+      alert("Error al cambiar estado");
+    }
   }
 
   function openEdit(u: PlatformUser) {
@@ -239,7 +303,7 @@ export default function SuperAdminUsuariosPage() {
                         <button onClick={()=>openEdit(u)} className="p-2 bg-slate-100 text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-all">
                           <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 113 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
                         </button>
-                        <button onClick={()=>toggleActivo(u.id)} className={`p-2 rounded-lg transition-all ${u.activo ? "bg-rose-50 text-rose-400 hover:text-rose-600 hover:bg-rose-100" : "bg-emerald-50 text-emerald-400 hover:text-emerald-600 hover:bg-emerald-100"}`}>
+                        <button onClick={()=>toggleActivo(u.id, u.activo)} className={`p-2 rounded-lg transition-all ${u.activo ? "bg-rose-50 text-rose-400 hover:text-rose-600 hover:bg-rose-100" : "bg-emerald-50 text-emerald-400 hover:text-emerald-600 hover:bg-emerald-100"}`}>
                           {u.activo ? (
                             <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M18.36 6.64a9 9 0 11-12.73 0M12 2v10"/></svg>
                           ) : (
@@ -284,8 +348,8 @@ export default function SuperAdminUsuariosPage() {
                   </td>
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-2">
-                       <span className="px-2 py-1 bg-slate-100 text-slate-600 rounded-md text-[9px] font-black uppercase border border-slate-200">
-                        {u.empresa_id}
+                      <span className="px-2 py-1 bg-slate-100 text-slate-600 rounded-md text-[9px] font-black uppercase border border-slate-200">
+                        {u.empresas?.nombre || u.empresa_id}
                       </span>
                     </div>
                   </td>

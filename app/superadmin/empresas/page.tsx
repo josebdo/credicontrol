@@ -1,6 +1,7 @@
 "use client";
-import { useState } from "react";
-import { EMPRESAS, USERS, Empresa } from "@/lib/auth";
+import { useState, useEffect } from "react";
+import { createClient } from "@/lib/supabase/client";
+import { Empresa } from "@/lib/auth";
 
 const PLAN_PRECIOS: Record<string,number> = { principiante:900, basico:1500, intermedio:2000, avanzado:3000, empresarial:5500 };
 const PLAN_MAX: Record<string,string>     = { principiante:"100", basico:"500", intermedio:"1,000", avanzado:"3,000", empresarial:"∞" };
@@ -9,7 +10,8 @@ const PLANES = ["principiante","basico","intermedio","avanzado","empresarial"];
 const EMPTY_EMP = { nombre:"", email:"", telefono:"", rnc:"", direccion:"", plan:"basico" as string };
 
 export default function SuperAdminEmpresas() {
-  const [empresas, setEmpresas] = useState<Empresa[]>([...EMPRESAS]);
+  const [empresas, setEmpresas] = useState<Empresa[]>([]);
+  const [loading, setLoading] = useState(true);
   const [buscar, setBuscar]     = useState("");
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing]   = useState<Empresa | null>(null);
@@ -17,6 +19,34 @@ export default function SuperAdminEmpresas() {
   const [saved, setSaved]       = useState(false);
   const [renovarEmp, setRenovarEmp] = useState<Empresa | null>(null);
   const [renewSaved, setRenewSaved] = useState(false);
+  const supabase = createClient();
+
+  useEffect(() => {
+    fetchEmpresas();
+  }, []);
+
+  async function fetchEmpresas() {
+    try {
+      setLoading(true);
+      const { data, error } = await supabase.from('empresas').select('*').order('created_at', { ascending: false });
+      if (error) throw error;
+      
+      // Fetch user counts
+      const { data: userCounts, error: errCounts } = await supabase.rpc('get_user_counts_per_company');
+      
+      const mapped = (data || []).map(e => ({
+        ...e,
+        plan: e.plan_id || 'basico', // Map plan_id to plan for compatibility with UI
+        userCount: (userCounts || []).find((c: any) => c.empresa_id === e.id)?.count || 0
+      }));
+
+      setEmpresas(mapped);
+    } catch (err) {
+      console.error("Error fetching empresas:", err);
+    } finally {
+      setLoading(false);
+    }
+  }
 
   const filtradas = empresas.filter(e => e.nombre.toLowerCase().includes(buscar.toLowerCase()));
 
@@ -32,37 +62,60 @@ export default function SuperAdminEmpresas() {
     setShowForm(true);
   }
 
-  function handleSave() {
+  async function handleSave() {
     if (!form.nombre) return;
-    if (editing) {
-      setEmpresas(prev => prev.map(e => e.id===editing.id ? {...e, ...form, plan:form.plan as Empresa["plan"]} : e));
-    } else {
-      const nueva: Empresa = {
-        id:     `emp-${Date.now()}`,
-        nombre: form.nombre,
-        email:  form.email,
-        telefono: form.telefono,
-        rnc:    form.rnc,
-        direccion: form.direccion,
-        plan:   form.plan as Empresa["plan"],
-        activa: true,
-        dueno:  "",
-      };
-      setEmpresas(prev => [...prev, nueva]);
+    try {
+      if (editing) {
+        const { error } = await supabase.from('empresas').update({
+          nombre: form.nombre,
+          email: form.email,
+          telefono: form.telefono,
+          rnc: form.rnc,
+          direccion: form.direccion,
+          plan_id: form.plan
+        }).eq('id', editing.id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase.from('empresas').insert({
+          nombre: form.nombre,
+          email: form.email,
+          telefono: form.telefono,
+          rnc: form.rnc,
+          direccion: form.direccion,
+          plan_id: form.plan,
+          activa: true
+        });
+        if (error) throw error;
+      }
+      setSaved(true);
+      fetchEmpresas();
+      setTimeout(()=>{ setSaved(false); setShowForm(false); setEditing(null); }, 1000);
+    } catch (err) {
+      alert("Error al guardar empresa");
     }
-    setSaved(true);
-    setTimeout(()=>{ setSaved(false); setShowForm(false); setEditing(null); }, 1000);
   }
 
-  function toggleActiva(id: string) {
-    setEmpresas(prev => prev.map(e => e.id===id ? {...e, activa:!e.activa} : e));
+  async function toggleActiva(id: string, current: boolean) {
+    try {
+      const { error } = await supabase.from('empresas').update({ activa: !current }).eq('id', id);
+      if (error) throw error;
+      fetchEmpresas();
+    } catch (err) {
+      alert("Error al cambiar estado");
+    }
   }
 
-  function handleRenovar() {
+  async function handleRenovar() {
     if (!renovarEmp) return;
-    setEmpresas(prev => prev.map(e => e.id===renovarEmp.id ? {...e, activa:true} : e));
-    setRenewSaved(true);
-    setTimeout(()=>{ setRenewSaved(false); setRenovarEmp(null); }, 1000);
+    try {
+      const { error } = await supabase.from('empresas').update({ activa: true }).eq('id', renovarEmp.id);
+      if (error) throw error;
+      setRenewSaved(true);
+      fetchEmpresas();
+      setTimeout(()=>{ setRenewSaved(false); setRenovarEmp(null); }, 1000);
+    } catch (err) {
+      alert("Error al renovar empresa");
+    }
   }
 
   return (
@@ -221,7 +274,7 @@ export default function SuperAdminEmpresas() {
             </thead>
             <tbody className="divide-y divide-slate-100">
               {filtradas.map(e=>{
-                const uc = USERS.filter(u=>u.empresa_id===e.id).length;
+                const uc = (e as any).userCount || 0;
                 const mrrVal = PLAN_PRECIOS[e.plan] ?? 0;
                 return (
                   <tr key={e.id} className="hover:bg-slate-50/80 transition-colors group">
@@ -262,7 +315,7 @@ export default function SuperAdminEmpresas() {
                           ? "bg-emerald-50 text-emerald-600 border border-emerald-100" 
                           : "bg-red-50 text-red-600 border border-red-100"
                       }`}
-                      onClick={()=>toggleActiva(e.id)}
+                      onClick={()=>toggleActiva(e.id, e.activa)}
                       >
                         <span className={`w-1.5 h-1.5 rounded-full ${e.activa ? "bg-emerald-500 animate-pulse" : "bg-red-500"}`} />
                         {e.activa ? "Activa" : "Suspendida"}
@@ -291,7 +344,7 @@ export default function SuperAdminEmpresas() {
                           </button>
                         )}
                         <button 
-                          onClick={()=>toggleActiva(e.id)}
+                          onClick={()=>toggleActiva(e.id, e.activa)}
                           className={`p-2 rounded-lg transition-all ${
                             e.activa ? "text-red-400 hover:text-red-600 hover:bg-red-50" : "text-blue-400 hover:text-blue-600 hover:bg-blue-50"
                           }`}
