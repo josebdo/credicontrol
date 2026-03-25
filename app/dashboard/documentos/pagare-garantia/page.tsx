@@ -34,7 +34,7 @@ export default function PagareGarantiaPage() {
           </FormField>
           <div className="pb-1">
             <Btn 
-              color="amber" 
+              color="yellow" 
               onClick={handleGenerate} 
               disabled={!selectedId || loading}
               className="w-full text-white"
@@ -85,7 +85,7 @@ export default function PagareGarantiaPage() {
             </div>
 
             <div className="mt-8 flex justify-center gap-4 no-print">
-              <Btn color="amber" variant="solid" onClick={() => window.print()} className="text-white">
+              <Btn color="yellow" variant="solid" onClick={() => window.print()} className="text-white">
                 Imprimir Pagaré
               </Btn>
               <Link href="/dashboard">
