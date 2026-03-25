@@ -82,7 +82,28 @@ export type Plantilla = {
   activa: boolean;
 };
 
-// ... otros tipos (Garantia, Gasto, etc.) siguen el mismo patrón de la base de datos
+export type Gasto = {
+  id: string;
+  referencia: string;
+  ref?: string; // compatibilidad UI
+  concepto: string;
+  monto: number;
+  categoria: string;
+  fecha: string;
+  notas?: string;
+  activo: boolean;
+};
+
+export type Garantia = {
+  id: string;
+  cliente_id: string;
+  cliente?: string; // compatibilidad UI
+  tipo: string;
+  descripcion: string;
+  valor_estimado: number;
+  estado: string;
+  notas?: string;
+};
 
 // ── CLIENTES ──────────────────────────────────────────────────────────────────
 
@@ -207,9 +228,9 @@ export async function getGastos() {
 }
 
 export async function addGasto(gasto: any) {
-  const { data, error } = await supabase.from('gastos').insert([gasto]).select().single();
+  const { data, error } = await supabase.from('gastos').insert([{ ...gasto, referencia: generarReferencia("GAS") }]).select().single();
   if (error) throw error;
-  return data;
+  return { ...data, ref: data.referencia }; // mapped for UI
 }
 
 export async function deleteGasto(id: string) {

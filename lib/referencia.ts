@@ -1,7 +1,7 @@
 // ─── Generador de Números de Referencia Automáticos ──────────────────────────
 // Formato: CC-YYYYMMDD-XXXXXX (CC = CrediControl, 6 dígitos aleatorios)
 
-export function generarReferencia(prefijo: "PAG"|"PRE"|"TRX"|"FAC" = "TRX"): string {
+export function generarReferencia(prefijo: "PAG"|"PRE"|"TRX"|"FAC"|"GAS"|"GAR" = "TRX"): string {
   const fecha = new Date();
   const y  = fecha.getFullYear();
   const m  = String(fecha.getMonth()+1).padStart(2,"0");
