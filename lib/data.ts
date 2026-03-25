@@ -65,6 +65,7 @@ export type Pago = {
   forma_pago: string;
   cobrado_por?: string;
   activo: boolean;
+  fecha?: string; // alias para compatibilidad UI
 };
 
 export type Cuenta = {

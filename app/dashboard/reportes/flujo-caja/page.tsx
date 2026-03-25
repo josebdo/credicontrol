@@ -4,7 +4,7 @@ import { PAGOS, GASTOS } from "@/lib/data";
 
 export default function FlujoCajaPage() {
   // Group by day
-  const allDates = [...new Set([...PAGOS.map(p=>p.fecha), ...GASTOS.map(g=>g.fecha)])].sort((a,b)=>b.localeCompare(a));
+  const allDates = Array.from(new Set([...PAGOS.map(p=>p.fecha), ...GASTOS.map(g=>g.fecha)])).sort((a,b)=>b.localeCompare(a));
   let saldoAcum = 0;
   const rows = allDates.map(fecha => {
     const ing = PAGOS.filter(p=>p.activo&&p.fecha===fecha).reduce((s,p)=>s+p.monto,0);
