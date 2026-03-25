@@ -182,10 +182,10 @@ export default function LandingPage() {
                   key={plan.id}
                   onClick={() => setSelectedPlanId(plan.id)}
                   className={`relative bg-card rounded-2xl overflow-hidden cursor-pointer transition-all duration-300 ${
-                    isSelected ? 'ring-2 scale-105 shadow-xl z-10' : plan.popular ? 'ring-2 scale-[1.02]' : 'border border-border hover:border-primary/50'
+                    isSelected ? 'border-2 scale-105 shadow-xl z-10' : plan.popular ? 'border-2 scale-[1.02]' : 'border border-border hover:border-primary/50'
                   }`}
                   style={{ 
-                    ringColor: isSelected || plan.popular ? plan.color : undefined,
+                    borderColor: isSelected || plan.popular ? plan.color : undefined,
                     boxShadow: isSelected ? `0 20px 40px ${plan.color}20` : undefined
                   }}
                 >
