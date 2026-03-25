@@ -157,12 +157,12 @@ export default function NuevoPrestamo() {
               </div>
 
               <div className="flex flex-wrap gap-3 pt-6 mt-6 border-t border-border">
-                <ModernButton onClick={handleGuardar} variant={guardado ? "success" : "primary"}>
+                <ModernButton onClick={handleGuardar} color={guardado ? "green" : "blue"}>
                   <Save className="h-4 w-4" />
                   {guardado ? "Guardado" : "Guardar Préstamo"}
                 </ModernButton>
                 {m > 0 && (
-                  <ModernButton onClick={() => setTicket(true)} variant="warning">
+                  <ModernButton onClick={() => setTicket(true)} color="yellow">
                     <Printer className="h-4 w-4" />
                     Imprimir Ticket
                   </ModernButton>
