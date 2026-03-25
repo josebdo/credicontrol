@@ -19,13 +19,13 @@ export default function SuperAdminDashboard() {
   useEffect(() => {
     async function loadStats() {
       try {
-        const { data: emps, error: errEmps } = await supabase.from('empresas').select('activa, plan_id');
+        const { data: emps, error: errEmps } = await supabase.from('empresas').select('activa, plan_id, planes(nombre)');
         const { count: usersCount, error: errUsers } = await supabase.from('usuarios').select('*', { count: 'exact', head: true });
         
         if (errEmps || errUsers) throw errEmps || errUsers;
 
-        // MRR Calculation (simplified for now, ideally use a view)
-        const totalMRR = emps?.reduce((sum, e) => sum + (e.activa ? (PLAN_PRECIOS[e.plan_id] || 0) : 0), 0) || 0;
+        // MRR Calculation
+        const totalMRR = emps?.reduce((sum, e: any) => sum + (e.activa ? (PLAN_PRECIOS[e.planes?.nombre] || 0) : 0), 0) || 0;
 
         setStats({
           total: emps?.length || 0,
