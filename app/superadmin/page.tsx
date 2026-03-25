@@ -19,7 +19,7 @@ export default function SuperAdminDashboard() {
   useEffect(() => {
     async function loadStats() {
       try {
-        const { data: emps, error: errEmps } = await supabase.from('empresas').select('activa, status, plan_id');
+        const { data: emps, error: errEmps } = await supabase.from('empresas').select('activa, plan_id');
         const { count: usersCount, error: errUsers } = await supabase.from('usuarios').select('*', { count: 'exact', head: true });
         
         if (errEmps || errUsers) throw errEmps || errUsers;

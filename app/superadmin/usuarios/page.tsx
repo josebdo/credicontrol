@@ -54,7 +54,7 @@ export default function SuperAdminUsuariosPage() {
         nombre: u.nombre,
         email: u.email,
         telefono: u.telefono || "",
-        platform_role: u.role === 'super_admin' ? 'platform_admin' : 'platform_soporte', // Map for UI
+        platform_role: u.rol === 'super_admin' ? 'platform_admin' : 'platform_soporte', // Map for UI
         activo: u.activo
       }));
       setPlatUsers(mappedStaff);
@@ -63,7 +63,7 @@ export default function SuperAdminUsuariosPage() {
       const { data: admins, error: errAdmins } = await supabase
         .from('usuarios')
         .select('*, empresas(nombre)')
-        .eq('role', 'administrador');
+        .eq('rol', 'administrador');
       
       if (errAdmins) throw errAdmins;
       setTenantAdmins(admins || []);
@@ -84,7 +84,7 @@ export default function SuperAdminUsuariosPage() {
           nombre: form.nombre,
           email: form.email,
           telefono: form.telefono,
-          role: dbRole as any,
+          rol: dbRole as any,
           activo: form.activo
         }).eq('id', editing.id);
         if (error) throw error;

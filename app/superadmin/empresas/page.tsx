@@ -28,16 +28,13 @@ export default function SuperAdminEmpresas() {
   async function fetchEmpresas() {
     try {
       setLoading(true);
-      const { data, error } = await supabase.from('empresas').select('*').order('created_at', { ascending: false });
+      const { data, error } = await supabase.from('empresas').select('*').order('creado_en', { ascending: false });
       if (error) throw error;
-      
-      // Fetch user counts
-      const { data: userCounts, error: errCounts } = await supabase.rpc('get_user_counts_per_company');
       
       const mapped = (data || []).map(e => ({
         ...e,
         plan: e.plan_id || 'basico', // Map plan_id to plan for compatibility with UI
-        userCount: (userCounts || []).find((c: any) => c.empresa_id === e.id)?.count || 0
+        userCount: 0 // Default for now
       }));
 
       setEmpresas(mapped);
