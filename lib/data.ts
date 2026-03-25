@@ -109,6 +109,16 @@ export type Garantia = {
   notas?: string;
 };
 
+export type MensajeWS = {
+  id: string;
+  cliente: string;
+  telefono: string;
+  mensaje: string;
+  estado: "Enviado" | "Entregado" | "Leído" | "Error";
+  fecha: string;
+  plantilla?: string;
+};
+
 // ── CLIENTES ──────────────────────────────────────────────────────────────────
 
 export async function getClientes() {
