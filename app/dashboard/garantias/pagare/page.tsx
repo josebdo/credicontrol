@@ -34,7 +34,7 @@ export default function PagareNotarialPage() {
           </FormField>
           <div className="pb-1">
             <Btn 
-              color="indigo" 
+              color="blue" 
               onClick={handleGenerate} 
               disabled={!selectedId || loading}
               className="w-full"
